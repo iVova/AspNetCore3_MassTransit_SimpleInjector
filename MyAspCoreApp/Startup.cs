@@ -1,10 +1,14 @@
+using MassTransit;
+using MassTransit.AspNetCoreIntegration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MyAspCoreApp.Consumers;
 using MyAspCoreApp.Services;
 using SimpleInjector;
+using System;
 
 namespace MyAspCoreApp
 {
@@ -30,6 +34,8 @@ namespace MyAspCoreApp
                 options.AddAspNetCore()
                     .AddControllerActivation();
             });
+
+            AddCustomMassTransit(services, _container);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,7 +62,7 @@ namespace MyAspCoreApp
                 endpoints.MapControllers();
             });
         }
-        
+
         public static IApplicationBuilder ConfigureSimpleInjector(IApplicationBuilder app, Container container)
         {
             // UseSimpleInjector() enables framework services to be injected into
@@ -83,6 +89,34 @@ namespace MyAspCoreApp
         {
             // Add application services. For instance:
             container.Register<IClock, SystemClock>();
+        }
+
+        public static IServiceCollection AddCustomMassTransit(IServiceCollection services, Container container)
+        {
+            // Sources if this method you can find by following url:
+            // https://github.com/MassTransit/MassTransit/blob/febe5c74b1a7f961efb8f25fd09db43b631632e4/src/Containers/MassTransit.AspNetCoreIntegration/ServiceCollectionExtensions.cs#L52
+
+
+            services.AddMassTransit(sp =>
+            {
+                var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
+                {
+                    var host = cfg.Host(new Uri("rabbitmq://myaspcoreapp.rabbitMq"), hostConfigurator =>
+                    {
+                        hostConfigurator.Username("guest");
+                        hostConfigurator.Password("guest");
+                    });
+
+                    cfg.ConfigureEndpoints(sp);
+                });
+
+                return bus;
+            }, scc =>
+            {
+                scc.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
+            });
+
+            return services;
         }
     }
 }

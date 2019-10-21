@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MassTransit.AspNetCore" Version="5.5.6" />
+    <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="5.5.6" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="5.5.6" />
     <PackageReference Include="MassTransit.SimpleInjector" Version="5.5.6" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.5" />

@@ -1,10 +1,12 @@
-﻿using System;
+﻿using MassTransit;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using MyAspCoreApp.Messages;
+using MyAspCoreApp.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using MyAspCoreApp.Services;
 
 namespace MyAspCoreApp.Controllers
 {
@@ -18,17 +20,24 @@ namespace MyAspCoreApp.Controllers
         };
 
         private readonly IClock _clock;
+        private readonly IBus _bus;
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(IClock clock, ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(IClock clock, IBus bus, ILogger<WeatherForecastController> logger)
         {
             _clock = clock;
+            _bus = bus;
             _logger = logger;
         }
 
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public async Task<IEnumerable<WeatherForecast>> Get()
         {
+            await _bus.Publish(new UserCreatedMessage
+            {
+                UserId = Guid.NewGuid()
+            });
+
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
