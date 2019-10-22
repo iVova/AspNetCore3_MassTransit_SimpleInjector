@@ -17,6 +17,8 @@ namespace MyAspCoreApp.Consumers
         public Task Consume(ConsumeContext<UserCreatedMessage> context)
         {
             // Send email...
+
+            var time = _clock.UtcNow;
             return Task.CompletedTask;
         }
     }

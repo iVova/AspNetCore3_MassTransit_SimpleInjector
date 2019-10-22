@@ -1,5 +1,4 @@
 using MassTransit;
-using MassTransit.AspNetCoreIntegration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -85,7 +84,7 @@ namespace MyAspCoreApp
 
             // Always verify the container
             container.Verify();
-
+            
             return app;
         }
 
@@ -93,14 +92,14 @@ namespace MyAspCoreApp
         {
             // Add application services. For instance:
             container.Register<IClock, SystemClock>();
-
-            container.Register<SendNotificationOnUserCreatedConsumer>();
         }
 
         public static void AddMassTransitThroughSimpleInjector(IServiceCollection services, Container container)
         {
             container.AddMassTransit(configurator =>
             {
+                configurator.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
+
                 configurator.AddBus(() =>
                 {
                     var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
@@ -111,35 +110,35 @@ namespace MyAspCoreApp
                             hostConfigurator.Password("guest");
                         });
 
+                        cfg.ReceiveEndpoint(host);
                         cfg.ConfigureEndpoints(container);
                     });
 
                     return bus;
                 });
-
             });
         }
 
-        public static void AddMassTransitThroughCore(IServiceCollection services, Container container)
-        {
-            services.AddMassTransit(sp =>
-            {
-                var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
-                {
-                    var host = cfg.Host(new Uri("rabbitmq://myaspcoreapp.rabbitMq"), hostConfigurator =>
-                    {
-                        hostConfigurator.Username("guest");
-                        hostConfigurator.Password("guest");
-                    });
+        //public static void AddMassTransitThroughCore(IServiceCollection services, Container container)
+        //{
+        //    services.AddMassTransit(sp =>
+        //    {
+        //        var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
+        //        {
+        //            var host = cfg.Host(new Uri("rabbitmq://myaspcoreapp.rabbitMq"), hostConfigurator =>
+        //            {
+        //                hostConfigurator.Username("guest");
+        //                hostConfigurator.Password("guest");
+        //            });
 
-                    cfg.ConfigureEndpoints(sp);
-                });
+        //            cfg.ConfigureEndpoints(sp);
+        //        });
 
-                return bus;
-            }, scc =>
-            {
-                scc.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
-            });
-        }
+        //        return bus;
+        //    }, scc =>
+        //    {
+        //        scc.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
+        //    });
+        //}
     }
 }
