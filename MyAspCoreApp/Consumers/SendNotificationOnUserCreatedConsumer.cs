@@ -1,7 +1,7 @@
 ﻿using MassTransit;
 using MyAspCoreApp.Messages;
-using System.Threading.Tasks;
 using MyAspCoreApp.Services;
+using System.Threading.Tasks;
 
 namespace MyAspCoreApp.Consumers
 {
@@ -16,8 +16,6 @@ namespace MyAspCoreApp.Consumers
 
         public Task Consume(ConsumeContext<UserCreatedMessage> context)
         {
-            // Send email...
-
             var time = _clock.UtcNow;
             return Task.CompletedTask;
         }

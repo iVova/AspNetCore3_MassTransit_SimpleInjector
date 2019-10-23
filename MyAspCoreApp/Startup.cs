@@ -9,14 +9,12 @@ using MyAspCoreApp.Services;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 using System;
-using System.Threading.Tasks;
-using MassTransit.Util;
 
 namespace MyAspCoreApp
 {
     public class Startup
     {
-        private Container _container = new Container();
+        private readonly Container _container = new Container();
 
         public Startup(IConfiguration configuration)
         {
@@ -86,10 +84,10 @@ namespace MyAspCoreApp
 
             // Always verify the container
             container.Verify();
-            
+
             var busControl = container.GetInstance<IBusControl>();
             busControl.Start();
-            
+
             return app;
         }
 
