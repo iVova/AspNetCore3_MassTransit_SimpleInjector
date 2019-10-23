@@ -9,6 +9,8 @@ using MyAspCoreApp.Services;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 using System;
+using System.Threading.Tasks;
+using MassTransit.Util;
 
 namespace MyAspCoreApp
 {
@@ -85,6 +87,9 @@ namespace MyAspCoreApp
             // Always verify the container
             container.Verify();
             
+            var busControl = container.GetInstance<IBusControl>();
+            busControl.Start();
+            
             return app;
         }
 
@@ -110,7 +115,6 @@ namespace MyAspCoreApp
                             hostConfigurator.Password("guest");
                         });
 
-                        cfg.ReceiveEndpoint(host);
                         cfg.ConfigureEndpoints(container);
                     });
 
