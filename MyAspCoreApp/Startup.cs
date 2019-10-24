@@ -1,55 +1,47 @@
-using MassTransit;
-using MassTransit.AspNetCoreIntegration;
+using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MyAspCoreApp.Consumers;
+using Microsoft.Extensions.Logging;
 using MyAspCoreApp.Services;
-using SimpleInjector;
-using System;
 
 namespace MyAspCoreApp
 {
     public class Startup
     {
-        private Container _container = new Container();
+        public IConfiguration Configuration { get; }
 
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers().AddControllersAsServices();
+        }
 
-            services.AddSimpleInjector(_container, options =>
-            {
-                // AddAspNetCore() wraps web requests in a Simple Injector scope.
-                options.AddAspNetCore()
-                    .AddControllerActivation();
-            });
+        // ConfigureContainer is where you can register things directly
+        // with Autofac. This runs after ConfigureServices so the things
+        // here will override registrations made in ConfigureServices.
+        // Don't build the container; that gets done for you by the factory.
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            //builder.RegisterModule(new AutofacModule());
 
-            AddCustomMassTransit(services, _container);
+            builder.RegisterType<SystemClock>().As<IClock>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            // !!!!
-            ConfigureSimpleInjector(app, _container);
-
-
 
             app.UseHttpsRedirection();
 
@@ -63,60 +55,32 @@ namespace MyAspCoreApp
             });
         }
 
-        public static IApplicationBuilder ConfigureSimpleInjector(IApplicationBuilder app, Container container)
-        {
-            // UseSimpleInjector() enables framework services to be injected into
-            // application components, resolved by Simple Injector.
-            app.UseSimpleInjector(container, options =>
-            {
-                // Add custom Simple Injector-created middleware to the ASP.NET pipeline.
-                // options.UseMiddleware<CustomMiddleware1>(app);
-
-                // Optionally, allow application components to depend on the
-                // non-generic Microsoft.Extensions.Logging.ILogger abstraction.
-                options.UseLogging();
-            });
-
-            InitializeContainer(container);
-
-            // Always verify the container
-            container.Verify();
-
-            return app;
-        }
-
-        private static void InitializeContainer(Container container)
-        {
-            // Add application services. For instance:
-            container.Register<IClock, SystemClock>();
-        }
-
-        public static IServiceCollection AddCustomMassTransit(IServiceCollection services, Container container)
-        {
-            // Sources if this method you can find by following url:
-            // https://github.com/MassTransit/MassTransit/blob/febe5c74b1a7f961efb8f25fd09db43b631632e4/src/Containers/MassTransit.AspNetCoreIntegration/ServiceCollectionExtensions.cs#L52
+        //public static IServiceCollection AddCustomMassTransit(IServiceCollection services, Container container)
+        //{
+        //    // Sources if this method you can find by following url:
+        //    // https://github.com/MassTransit/MassTransit/blob/febe5c74b1a7f961efb8f25fd09db43b631632e4/src/Containers/MassTransit.AspNetCoreIntegration/ServiceCollectionExtensions.cs#L52
 
 
-            services.AddMassTransit(sp =>
-            {
-                var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
-                {
-                    var host = cfg.Host(new Uri("rabbitmq://myaspcoreapp.rabbitMq"), hostConfigurator =>
-                    {
-                        hostConfigurator.Username("guest");
-                        hostConfigurator.Password("guest");
-                    });
+        //    services.AddMassTransit(sp =>
+        //    {
+        //        var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
+        //        {
+        //            var host = cfg.Host(new Uri("rabbitmq://myaspcoreapp.rabbitMq"), hostConfigurator =>
+        //            {
+        //                hostConfigurator.Username("guest");
+        //                hostConfigurator.Password("guest");
+        //            });
 
-                    cfg.ConfigureEndpoints(sp);
-                });
+        //            cfg.ConfigureEndpoints(sp);
+        //        });
 
-                return bus;
-            }, scc =>
-            {
-                scc.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
-            });
+        //        return bus;
+        //    }, scc =>
+        //    {
+        //        scc.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
+        //    });
 
-            return services;
-        }
+        //    return services;
+        //}
     }
 }
