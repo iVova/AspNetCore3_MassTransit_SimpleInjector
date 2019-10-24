@@ -24,7 +24,8 @@ namespace MyAspCoreApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers().AddControllersAsServices();
+            services.AddMassTransitHostedService();
+            services.AddControllers();
         }
 
         // ConfigureContainer is where you can register things directly
@@ -47,9 +48,6 @@ namespace MyAspCoreApp
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            var b = app.ApplicationServices.GetService<IBusControl>();
-            b.Start();
 
             app.UseHttpsRedirection();
 
