@@ -1,11 +1,14 @@
 using Autofac;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MyAspCoreApp.Consumers;
 using MyAspCoreApp.Services;
+using System;
 
 namespace MyAspCoreApp
 {
@@ -33,6 +36,8 @@ namespace MyAspCoreApp
             //builder.RegisterModule(new AutofacModule());
 
             builder.RegisterType<SystemClock>().As<IClock>();
+
+            ConfigureMassTransitThoughAutofac(builder);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,6 +47,9 @@ namespace MyAspCoreApp
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            var b = app.ApplicationServices.GetService<IBusControl>();
+            b.Start();
 
             app.UseHttpsRedirection();
 
@@ -55,32 +63,23 @@ namespace MyAspCoreApp
             });
         }
 
-        //public static IServiceCollection AddCustomMassTransit(IServiceCollection services, Container container)
-        //{
-        //    // Sources if this method you can find by following url:
-        //    // https://github.com/MassTransit/MassTransit/blob/febe5c74b1a7f961efb8f25fd09db43b631632e4/src/Containers/MassTransit.AspNetCoreIntegration/ServiceCollectionExtensions.cs#L52
+        private static void ConfigureMassTransitThoughAutofac(ContainerBuilder builder)
+        {
+            builder.AddMassTransit(x =>
+            {
+                x.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
 
+                x.AddBus(context => Bus.Factory.CreateUsingRabbitMq(cfg =>
+                {
+                    var host = cfg.Host(new Uri("rabbitmq://myaspcoreapp.rabbitMq"), hostConfigurator =>
+                    {
+                        hostConfigurator.Username("guest");
+                        hostConfigurator.Password("guest");
+                    });
 
-        //    services.AddMassTransit(sp =>
-        //    {
-        //        var bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
-        //        {
-        //            var host = cfg.Host(new Uri("rabbitmq://myaspcoreapp.rabbitMq"), hostConfigurator =>
-        //            {
-        //                hostConfigurator.Username("guest");
-        //                hostConfigurator.Password("guest");
-        //            });
-
-        //            cfg.ConfigureEndpoints(sp);
-        //        });
-
-        //        return bus;
-        //    }, scc =>
-        //    {
-        //        scc.AddConsumersFromNamespaceContaining<SendNotificationOnUserCreatedConsumer>();
-        //    });
-
-        //    return services;
-        //}
+                    cfg.ConfigureEndpoints(context);
+                }));
+            });
+        }
     }
 }
