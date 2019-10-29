@@ -94,7 +94,7 @@ namespace MyAspCoreApp
         private static void InitializeContainer(Container container)
         {
             // Add application services. For instance:
-            container.Register<IClock, SystemClock>();
+            container.Register<IClock, SystemClock>(Lifestyle.Scoped);
         }
 
         public static void AddMassTransitThroughSimpleInjector(IServiceCollection services, Container container)
