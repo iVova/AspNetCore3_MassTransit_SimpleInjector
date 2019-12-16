@@ -1,9 +1,9 @@
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.0.0-alpine3.9 AS base
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.0-alpine3.10 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.0.100-alpine3.9 AS build
+FROM mcr.microsoft.com/dotnet/core/3.1.100-alpine3.10 AS build
 WORKDIR /src
 COPY ["MyAspCoreApp/MyAspCoreApp.csproj", "MyAspCoreApp/"]
 RUN dotnet restore "MyAspCoreApp/MyAspCoreApp.csproj"

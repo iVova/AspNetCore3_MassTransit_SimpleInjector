@@ -18,6 +18,7 @@ namespace MyAspCoreApp
 
         public Startup(IConfiguration configuration)
         {
+            _container.Options.ResolveUnregisteredConcreteTypes = false;
             Configuration = configuration;
         }
 
@@ -26,12 +27,15 @@ namespace MyAspCoreApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            _container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+          //  _container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
 
             services.AddControllers();
 
             services.AddSimpleInjector(_container, options =>
             {
+
+                options.AddLogging();
+
                 // AddAspNetCore() wraps web requests in a Simple Injector scope.
                 options.AddAspNetCore()
                     .AddControllerActivation();
@@ -45,14 +49,13 @@ namespace MyAspCoreApp
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // !!!!
+            ConfigureSimpleInjector(app, _container);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            // !!!!
-            ConfigureSimpleInjector(app, _container);
-
 
             app.UseHttpsRedirection();
 
@@ -74,10 +77,6 @@ namespace MyAspCoreApp
             {
                 // Add custom Simple Injector-created middleware to the ASP.NET pipeline.
                 // options.UseMiddleware<CustomMiddleware1>(app);
-
-                // Optionally, allow application components to depend on the
-                // non-generic Microsoft.Extensions.Logging.ILogger abstraction.
-                options.UseLogging();
             });
 
             InitializeContainer(container);
